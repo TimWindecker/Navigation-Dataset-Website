@@ -2,6 +2,8 @@
 
 This is a minimalistic web application for collecting robot navigation dataset images along with metadata. Users can submit their name, location information, additional notes, and upload multiple images.
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/2ca98639-e01e-42b0-a4fd-b8966b915982/deploy-status)](https://app.netlify.com/sites/navigation-dataset/deploys)
+
 ## Features
 
 - Simple, responsive design

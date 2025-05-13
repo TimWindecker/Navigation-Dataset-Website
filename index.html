@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Robot Navigation Dataset Collection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -16,6 +17,13 @@
         h1 {
             color: #2c3e50;
             margin-bottom: 20px;
+        }
+        .project-info {
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
         }
         .form-group {
             margin-bottom: 20px;
@@ -47,6 +55,10 @@
         }
         button:hover {
             background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
         }
         #file-list {
             margin-top: 10px;
@@ -94,6 +106,8 @@
         }
         progress {
             width: 100%;
+            height: 20px;
+            border-radius: 4px;
         }
         #drop-area {
             border: 2px dashed #ccc;
@@ -102,10 +116,15 @@
             text-align: center;
             cursor: pointer;
             margin-bottom: 10px;
+            transition: all 0.3s ease;
         }
         #drop-area.highlight {
             border-color: #3498db;
             background-color: #f0f8ff;
+        }
+        #drop-area p {
+            margin: 0;
+            color: #666;
         }
         .visually-hidden {
             position: absolute;
@@ -118,10 +137,36 @@
             white-space: nowrap;
             border: 0;
         }
+        .file-preview {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <h1>Robot Navigation Dataset Collection</h1>
+    
+    <div id="project-info" class="project-info markdown-body">
+        <!-- Project information will be loaded here -->
+        <p>Loading project information...</p>
+    </div>
     
     <form id="upload-form">
         <div class="form-group">
@@ -158,7 +203,24 @@
     
     <div id="status-message"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <script>
+        // Load project information from markdown file
+        (async function loadProjectInfo() {
+            try {
+                const response = await fetch('project-info.md');
+                if (response.ok) {
+                    const markdown = await response.text();
+                    document.getElementById('project-info').innerHTML = marked.parse(markdown);
+                } else {
+                    document.getElementById('project-info').innerHTML = '<p>Project information not available.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading project info:', error);
+                document.getElementById('project-info').innerHTML = '<p>Error loading project information.</p>';
+            }
+        })();
+
         // Store selected files
         let selectedFiles = [];
         const fileList = document.getElementById('file-list');
@@ -169,12 +231,7 @@
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
         const statusMessage = document.getElementById('status-message');
-        
-        // Configuration (to be replaced with your actual values)
-        const config = {
-            WEBDAV_URL: "", // You'll need to set this from environment variables during build
-            SHARE_ID: "",   // You'll need to set this from environment variables during build
-        };
+        const submitBtn = document.getElementById('submit-btn');
         
         // Handle click on drop area
         dropArea.addEventListener('click', () => {
@@ -184,6 +241,7 @@
         // Prevent default drag behaviors
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
         });
         
         function preventDefaults(e) {
@@ -208,7 +266,7 @@
             dropArea.classList.remove('highlight');
         }
         
-        // Handle dropped files
+        // Handle dropped files - Fix for Firefox compatibility
         dropArea.addEventListener('drop', handleDrop, false);
         
         function handleDrop(e) {
@@ -235,9 +293,15 @@
                 // Add to selected files
                 selectedFiles.push(file);
                 
-                // Display in the list
+                // Display in the list with image preview
                 const fileItem = document.createElement('div');
                 fileItem.className = 'file-item';
+                
+                // Create image preview if it's an image
+                const preview = document.createElement('img');
+                preview.className = 'file-preview';
+                preview.src = URL.createObjectURL(file);
+                preview.onload = () => URL.revokeObjectURL(preview.src); // Clean up
                 
                 const fileInfo = document.createElement('div');
                 fileInfo.className = 'file-info';
@@ -254,6 +318,7 @@
                     }
                 };
                 
+                fileItem.appendChild(preview);
                 fileItem.appendChild(fileInfo);
                 fileItem.appendChild(removeBtn);
                 fileList.appendChild(fileItem);
@@ -288,9 +353,10 @@
             }
             
             try {
-                // Show progress container
+                // Show progress container and disable submit button
                 progressContainer.style.display = 'block';
-                document.getElementById('submit-btn').disabled = true;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner"></span>Uploading...';
                 
                 // Create folder name based on name and timestamp
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -318,9 +384,15 @@
                 
                 // Then upload each image
                 for (const file of selectedFiles) {
-                    await uploadFile(file, `${folderName}/${file.name}`);
-                    uploadedFiles++;
-                    updateProgress(uploadedFiles, totalFiles);
+                    try {
+                        await uploadFile(file, `${folderName}/${file.name}`);
+                        uploadedFiles++;
+                        updateProgress(uploadedFiles, totalFiles);
+                    } catch (error) {
+                        console.error(`Error uploading ${file.name}:`, error);
+                        showStatus(`Error uploading ${file.name}: ${error.message}`, 'error');
+                        // Continue with next file
+                    }
                 }
                 
                 showStatus('All files uploaded successfully!', 'success');
@@ -334,7 +406,8 @@
                 console.error('Upload error:', error);
                 showStatus(`Error uploading files: ${error.message}`, 'error');
             } finally {
-                document.getElementById('submit-btn').disabled = false;
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Upload Dataset';
                 progressContainer.style.display = 'none';
             }
         });
@@ -345,18 +418,34 @@
             formData.append('file', file);
             formData.append('path', path);
             
-            // Call our Netlify function to handle the upload
-            const response = await fetch('/.netlify/functions/upload-to-webdav', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Upload failed');
+            try {
+                // Call our Netlify function to handle the upload
+                const response = await fetch('/.netlify/functions/upload-to-webdav', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Handle non-OK responses
+                if (!response.ok) {
+                    let errorMessage;
+                    try {
+                        // Try to parse error as JSON
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || `Upload failed with status ${response.status}`;
+                    } catch (parseError) {
+                        // If not JSON, get text
+                        const errorText = await response.text();
+                        errorMessage = errorText || `Upload failed with status ${response.status}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                // Parse response as JSON
+                return await response.json();
+            } catch (error) {
+                console.error('Error in uploadFile:', error);
+                throw error;
             }
-            
-            return response.json();
         }
         
         function updateProgress(current, total) {

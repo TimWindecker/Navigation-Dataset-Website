@@ -7,6 +7,7 @@ const busboy = require('busboy');
 // Get these from Netlify environment variables
 const WEBDAV_URL = process.env.WEBDAV_URL;
 const SHARE_ID = process.env.SHARE_ID;
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
 
 exports.handler = async function(event, context) {
   // Only allow POST requests
@@ -14,6 +15,7 @@ exports.handler = async function(event, context) {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method Not Allowed' }),
+      headers: { 'Content-Type': 'application/json' }
     };
   }
 
@@ -25,6 +27,7 @@ exports.handler = async function(event, context) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Missing file or path parameter' }),
+        headers: { 'Content-Type': 'application/json' }
       };
     }
 
@@ -44,7 +47,15 @@ exports.handler = async function(event, context) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`WebDAV upload failed: ${response.status} ${errorText}`);
+      console.error(`WebDAV upload failed: ${response.status} ${errorText}`);
+      return {
+        statusCode: response.status,
+        body: JSON.stringify({ 
+          error: 'WebDAV upload failed', 
+          message: `Status: ${response.status} - ${errorText.substring(0, 200)}` 
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      };
     }
 
     return {
@@ -54,6 +65,7 @@ exports.handler = async function(event, context) {
         message: 'File uploaded successfully',
         path: path
       }),
+      headers: { 'Content-Type': 'application/json' }
     };
   } catch (error) {
     console.error('Upload error:', error);
@@ -63,6 +75,7 @@ exports.handler = async function(event, context) {
         error: 'Upload failed', 
         message: error.message 
       }),
+      headers: { 'Content-Type': 'application/json' }
     };
   }
 };
@@ -81,9 +94,12 @@ function parseMultipartForm(event) {
     const bb = busboy({ 
       headers: event.headers,
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB limit
+        fileSize: MAX_FILE_SIZE, // Increased file size limit
       }
     });
+    
+    // Flag to track if file size limit was exceeded
+    let fileSizeExceeded = false;
     
     // Handle file part
     bb.on('file', (name, file, info) => {
@@ -94,13 +110,20 @@ function parseMultipartForm(event) {
         chunks.push(chunk);
       });
       
+      file.on('limit', () => {
+        fileSizeExceeded = true;
+        console.error('File size limit exceeded');
+      });
+      
       file.on('end', () => {
-        result.file = {
-          filename,
-          mimetype: mimeType,
-          encoding,
-          data: Buffer.concat(chunks),
-        };
+        if (!fileSizeExceeded) {
+          result.file = {
+            filename,
+            mimetype: mimeType,
+            encoding,
+            data: Buffer.concat(chunks),
+          };
+        }
       });
     });
     
@@ -111,7 +134,11 @@ function parseMultipartForm(event) {
     
     // Handle end of parsing
     bb.on('finish', () => {
-      resolve(result);
+      if (fileSizeExceeded) {
+        reject(new Error(`File size exceeds the limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`));
+      } else {
+        resolve(result);
+      }
     });
     
     // Handle errors
