@@ -366,6 +366,9 @@
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                 const folderName = `${name.replace(/\s+/g, '_')}_${timestamp}`;
                 
+                // Show status during folder creation
+                showStatus(`Creating folder: ${folderName}...`, 'success');
+                
                 // Create metadata file
                 const metadata = {
                     name: name,
@@ -416,11 +419,14 @@
             }
         });
         
+        
         async function uploadFile(file, path) {
             // Create form data to send to Netlify function
             const formData = new FormData();
             formData.append('file', file);
             formData.append('path', path);
+            
+            console.log(`Uploading file to path: ${path}`);
             
             try {
                 // Call our Netlify function to handle the upload
@@ -429,6 +435,8 @@
                     body: formData
                 });
                 
+                console.log(`Upload response status: ${response.status}`);
+                
                 // Handle non-OK responses
                 if (!response.ok) {
                     let errorMessage;
@@ -436,16 +444,20 @@
                         // Try to parse error as JSON
                         const errorData = await response.json();
                         errorMessage = errorData.message || `Upload failed with status ${response.status}`;
+                        console.error('Upload error details:', errorData);
                     } catch (parseError) {
                         // If not JSON, get text
                         const errorText = await response.text();
                         errorMessage = errorText || `Upload failed with status ${response.status}`;
+                        console.error('Upload error text:', errorText);
                     }
                     throw new Error(errorMessage);
                 }
                 
                 // Parse response as JSON
-                return await response.json();
+                const result = await response.json();
+                console.log('Upload success:', result);
+                return result;
             } catch (error) {
                 console.error('Error in uploadFile:', error);
                 throw error;

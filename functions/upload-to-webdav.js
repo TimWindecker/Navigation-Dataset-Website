@@ -8,6 +8,14 @@ const busboy = require('busboy');
 const WEBDAV_URL = process.env.WEBDAV_URL;
 const SHARE_ID = process.env.SHARE_ID;
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
+const DEBUG = true; // Set to true for detailed logging
+
+// Helper function for logging when debug is enabled
+function debugLog(...args) {
+  if (DEBUG) {
+    console.log('[DEBUG]', ...args);
+  }
+}
 
 exports.handler = async function(event, context) {
   // Only allow POST requests
@@ -31,33 +39,30 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Create full WebDAV URL for upload
-    const uploadUrl = `${WEBDAV_URL}/${path}`;
+    debugLog(`Processing upload for path: ${path}`);
     
-    // First, ensure the directory exists by creating it
+    // Check if we need to create a directory
     if (path.includes('/')) {
       const dirPath = path.substring(0, path.lastIndexOf('/'));
-      const dirUrl = `${WEBDAV_URL}/${dirPath}`;
+      debugLog(`Directory needs to be created: ${dirPath}`);
       
-      try {
-        // Try to create the directory (MKCOL request)
-        const mkcolResponse = await fetch(dirUrl, {
-          method: 'MKCOL',
-          headers: {
-            'Authorization': `Basic ${Buffer.from(`${SHARE_ID}:`).toString('base64')}`,
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        });
-        
-        // 201 Created or 405 Method Not Allowed (if directory already exists) are both acceptable
-        if (!mkcolResponse.ok && mkcolResponse.status !== 405) {
-          console.warn(`Warning: Could not create directory ${dirPath}: ${mkcolResponse.status}`);
-        }
-      } catch (dirError) {
-        console.warn(`Error creating directory: ${dirError.message}`);
-        // Continue anyway, as the PUT might still succeed
+      // Create the directory explicitly
+      const dirCreated = await createDirectory(dirPath);
+      if (!dirCreated) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ 
+            error: 'Failed to create directory', 
+            message: `Could not create directory ${dirPath}`
+          }),
+          headers: { 'Content-Type': 'application/json' }
+        };
       }
     }
+
+    // Create full WebDAV URL for upload
+    const uploadUrl = `${WEBDAV_URL}/${path}`;
+    debugLog(`Uploading to: ${uploadUrl}`);
     
     // Upload to WebDAV
     const response = await fetch(uploadUrl, {
@@ -104,6 +109,65 @@ exports.handler = async function(event, context) {
     };
   }
 };
+
+// Function to create a directory recursively
+async function createDirectory(dirPath) {
+  // Split the path into segments
+  const segments = dirPath.split('/').filter(Boolean);
+  let currentPath = '';
+  
+  // Iterate through segments and create directories one by one
+  for (const segment of segments) {
+    currentPath += `${currentPath ? '/' : ''}${segment}`;
+    debugLog(`Creating directory segment: ${currentPath}`);
+    
+    try {
+      const dirUrl = `${WEBDAV_URL}/${currentPath}`;
+      debugLog(`MKCOL request to: ${dirUrl}`);
+      
+      const response = await fetch(dirUrl, {
+        method: 'MKCOL',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`${SHARE_ID}:`).toString('base64')}`,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      
+      // 201 Created = success
+      // 405 Method Not Allowed = directory already exists
+      // Either is acceptable
+      if (!response.ok && response.status !== 405) {
+        const errorText = await response.text();
+        console.error(`Failed to create directory ${currentPath}: Status ${response.status} - ${errorText}`);
+        
+        // Check if directory already exists by trying to GET it
+        const checkResponse = await fetch(dirUrl, {
+          method: 'PROPFIND',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${SHARE_ID}:`).toString('base64')}`,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Depth': '0'
+          }
+        });
+        
+        if (!checkResponse.ok) {
+          const checkErrorText = await checkResponse.text();
+          console.error(`Directory ${currentPath} does not exist and could not be created: ${checkErrorText}`);
+          return false;
+        } else {
+          debugLog(`Directory ${currentPath} already exists, continuing...`);
+        }
+      } else {
+        debugLog(`Successfully created or confirmed directory: ${currentPath}`);
+      }
+    } catch (error) {
+      console.error(`Error creating directory ${currentPath}:`, error);
+      return false;
+    }
+  }
+  
+  return true;
+}
 
 // Helper function to parse multipart form data
 function parseMultipartForm(event) {
