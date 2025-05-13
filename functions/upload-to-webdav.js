@@ -60,8 +60,12 @@ exports.handler = async function(event, context) {
       }
     }
 
-    // Create full WebDAV URL for upload
-    const uploadUrl = `${WEBDAV_URL}/${path}`;
+    // Create full WebDAV URL for upload - Fix double slash issue
+    // Ensure WEBDAV_URL doesn't end with slash and path doesn't start with slash
+    const normalizedWebdavUrl = WEBDAV_URL.endsWith('/') ? WEBDAV_URL.slice(0, -1) : WEBDAV_URL;
+    const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+    const uploadUrl = `${normalizedWebdavUrl}/${normalizedPath}`;
+    
     debugLog(`Uploading to: ${uploadUrl}`);
     
     // Upload to WebDAV
@@ -122,7 +126,11 @@ async function createDirectory(dirPath) {
     debugLog(`Creating directory segment: ${currentPath}`);
     
     try {
-      const dirUrl = `${WEBDAV_URL}/${currentPath}`;
+      // Fix double slash issue in directory creation URLs
+      const normalizedWebdavUrl = WEBDAV_URL.endsWith('/') ? WEBDAV_URL.slice(0, -1) : WEBDAV_URL;
+      const normalizedPath = currentPath.startsWith('/') ? currentPath.substring(1) : currentPath;
+      const dirUrl = `${normalizedWebdavUrl}/${normalizedPath}`;
+      
       debugLog(`MKCOL request to: ${dirUrl}`);
       
       const response = await fetch(dirUrl, {

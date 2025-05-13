@@ -162,6 +162,25 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Added styles for upload count display */
+        .upload-count {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .upload-list {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        .upload-list-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .upload-list-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
     </style>
 </head>
 <body>
@@ -195,6 +214,7 @@
                 <input type="file" id="fileInput" name="files" multiple accept="image/*" class="visually-hidden">
             </div>
             <div id="file-list"></div>
+            <div class="upload-count" id="upload-count">0 files selected</div>
         </div>
         
         <button type="submit" id="submit-btn">Upload Dataset</button>
@@ -206,6 +226,11 @@
     </div>
     
     <div id="status-message"></div>
+    
+    <div id="recent-uploads" class="upload-list" style="display: none;">
+        <h3 class="upload-list-title">Recent Uploads</h3>
+        <div id="upload-list-items"></div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
     <script>
@@ -236,6 +261,38 @@
         const progressText = document.getElementById('progress-text');
         const statusMessage = document.getElementById('status-message');
         const submitBtn = document.getElementById('submit-btn');
+        const uploadCount = document.getElementById('upload-count');
+        const recentUploads = document.getElementById('recent-uploads');
+        const uploadListItems = document.getElementById('upload-list-items');
+        
+        // Track recent uploads in local storage
+        let recentUploadsList = JSON.parse(localStorage.getItem('recentUploads') || '[]');
+        
+        // Update the file count display
+        function updateFileCount() {
+            uploadCount.textContent = `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''} selected`;
+        }
+        
+        // Display recent uploads if available
+        function displayRecentUploads() {
+            if (recentUploadsList.length > 0) {
+                recentUploads.style.display = 'block';
+                uploadListItems.innerHTML = '';
+                
+                // Show the 5 most recent uploads
+                recentUploadsList.slice(0, 5).forEach(upload => {
+                    const item = document.createElement('div');
+                    item.className = 'upload-list-item';
+                    item.textContent = `${upload.name} (${upload.location}) - ${upload.timestamp} - ${upload.fileCount} files`;
+                    uploadListItems.appendChild(item);
+                });
+            } else {
+                recentUploads.style.display = 'none';
+            }
+        }
+        
+        // Initialize display of recent uploads
+        displayRecentUploads();
         
         // Handle click on drop area
         dropArea.addEventListener('click', () => {
@@ -319,6 +376,7 @@
                     if (index > -1) {
                         selectedFiles.splice(index, 1);
                         fileList.removeChild(fileItem);
+                        updateFileCount();
                     }
                 };
                 
@@ -327,6 +385,9 @@
                 fileItem.appendChild(removeBtn);
                 fileList.appendChild(fileItem);
             });
+            
+            // Update file count display
+            updateFileCount();
             
             // Reset file input to allow selecting the same files again
             fileInput.value = '';
@@ -402,12 +463,29 @@
                     }
                 }
                 
+                // Save this upload to recent uploads
+                const uploadRecord = {
+                    name: name,
+                    location: location,
+                    timestamp: new Date().toLocaleString(),
+                    fileCount: selectedFiles.length
+                };
+                
+                recentUploadsList.unshift(uploadRecord); // Add to beginning
+                if (recentUploadsList.length > 10) {
+                    recentUploadsList.pop(); // Keep only the 10 most recent
+                }
+                
+                localStorage.setItem('recentUploads', JSON.stringify(recentUploadsList));
+                displayRecentUploads();
+                
                 showStatus('All files uploaded successfully!', 'success');
                 
                 // Reset the form
                 uploadForm.reset();
                 selectedFiles = [];
                 fileList.innerHTML = '';
+                updateFileCount();
                 
             } catch (error) {
                 console.error('Upload error:', error);
