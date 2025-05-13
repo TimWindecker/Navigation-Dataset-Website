@@ -34,6 +34,31 @@ exports.handler = async function(event, context) {
     // Create full WebDAV URL for upload
     const uploadUrl = `${WEBDAV_URL}/${path}`;
     
+    // First, ensure the directory exists by creating it
+    if (path.includes('/')) {
+      const dirPath = path.substring(0, path.lastIndexOf('/'));
+      const dirUrl = `${WEBDAV_URL}/${dirPath}`;
+      
+      try {
+        // Try to create the directory (MKCOL request)
+        const mkcolResponse = await fetch(dirUrl, {
+          method: 'MKCOL',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${SHARE_ID}:`).toString('base64')}`,
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        
+        // 201 Created or 405 Method Not Allowed (if directory already exists) are both acceptable
+        if (!mkcolResponse.ok && mkcolResponse.status !== 405) {
+          console.warn(`Warning: Could not create directory ${dirPath}: ${mkcolResponse.status}`);
+        }
+      } catch (dirError) {
+        console.warn(`Error creating directory: ${dirError.message}`);
+        // Continue anyway, as the PUT might still succeed
+      }
+    }
+    
     // Upload to WebDAV
     const response = await fetch(uploadUrl, {
       method: 'PUT',
