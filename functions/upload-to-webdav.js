@@ -45,19 +45,31 @@ exports.handler = async function(event, context) {
     if (path.includes('/')) {
       const dirPath = path.substring(0, path.lastIndexOf('/'));
       debugLog(`Directory needs to be created: ${dirPath}`);
-      
-      // TODO Create the directory explicitly
-      // const dirCreated = await createDirectory(dirPath);
-      // if (!dirCreated) {
-      //   return {
-      //     statusCode: 500,
-      //     body: JSON.stringify({ 
-      //       error: 'Failed to create directory', 
-      //       message: `Could not create directory ${dirPath}`
-      //     }),
-      //     headers: { 'Content-Type': 'application/json' }
-      //   };
-      // }
+      try {
+        const dirCreated = await createDirectory(dirPath);
+        debugLog(`Result of createDirectory(${dirPath}):`, dirCreated);
+        if (!dirCreated) {
+          debugLog(`Failed to create directory ${dirPath}`);
+          return {
+            statusCode: 500,
+            body: JSON.stringify({
+              error: 'Failed to create directory',
+              message: `Could not create directory ${dirPath}`
+            }),
+            headers: { 'Content-Type': 'application/json' }
+          };
+        }
+      } catch (err) {
+        console.error("Exception in createDirectory:", err);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            error: 'Exception in createDirectory',
+            message: err.message
+          }),
+          headers: { 'Content-Type': 'application/json' }
+        };
+      }
     }
 
     // Create full WebDAV URL for upload - Fix double slash issue
