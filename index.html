@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Navigation Dataset Collection</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        textarea {
+            min-height: 100px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #file-list {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            min-height: 50px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            margin: 5px 0;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .file-info {
+            flex-grow: 1;
+        }
+        .remove-file {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .status {
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        #progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        progress {
+            width: 100%;
+        }
+        #drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        #drop-area.highlight {
+            border-color: #3498db;
+            background-color: #f0f8ff;
+        }
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Robot Navigation Dataset Collection</h1>
+    
+    <form id="upload-form">
+        <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="location">Image Location</label>
+            <input type="text" id="location" name="location" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="notes">Additional Notes</label>
+            <textarea id="notes" name="notes"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="fileInput">Upload Images</label>
+            <div id="drop-area">
+                <p>Drag & drop images here or click to select files</p>
+                <input type="file" id="fileInput" name="files" multiple accept="image/*" class="visually-hidden">
+            </div>
+            <div id="file-list"></div>
+        </div>
+        
+        <button type="submit" id="submit-btn">Upload Dataset</button>
+    </form>
+    
+    <div id="progress-container">
+        <p>Uploading... <span id="progress-text">0%</span></p>
+        <progress id="progress-bar" value="0" max="100"></progress>
+    </div>
+    
+    <div id="status-message"></div>
+
+    <script>
+        // Store selected files
+        let selectedFiles = [];
+        const fileList = document.getElementById('file-list');
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('drop-area');
+        const uploadForm = document.getElementById('upload-form');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const statusMessage = document.getElementById('status-message');
+        
+        // Configuration (to be replaced with your actual values)
+        const config = {
+            WEBDAV_URL: "", // You'll need to set this from environment variables during build
+            SHARE_ID: "",   // You'll need to set this from environment variables during build
+        };
+        
+        // Handle click on drop area
+        dropArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('highlight');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('highlight');
+        }
+        
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+        
+        // File input change handler
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            Array.from(files).forEach(file => {
+                // Only accept images
+                if (!file.type.match('image.*')) {
+                    showStatus(`Only image files are accepted.`, 'error');
+                    return;
+                }
+                
+                // Add to selected files
+                selectedFiles.push(file);
+                
+                // Display in the list
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'file-info';
+                fileInfo.textContent = `${file.name} (${formatSize(file.size)})`;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-file';
+                removeBtn.textContent = 'Remove';
+                removeBtn.onclick = function() {
+                    const index = selectedFiles.indexOf(file);
+                    if (index > -1) {
+                        selectedFiles.splice(index, 1);
+                        fileList.removeChild(fileItem);
+                    }
+                };
+                
+                fileItem.appendChild(fileInfo);
+                fileItem.appendChild(removeBtn);
+                fileList.appendChild(fileItem);
+            });
+            
+            // Reset file input to allow selecting the same files again
+            fileInput.value = '';
+        }
+        
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+        
+        // Form submission
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const location = document.getElementById('location').value;
+            const notes = document.getElementById('notes').value;
+            
+            if (!name || !location) {
+                showStatus('Please fill out all required fields.', 'error');
+                return;
+            }
+            
+            if (selectedFiles.length === 0) {
+                showStatus('Please select at least one image to upload.', 'error');
+                return;
+            }
+            
+            try {
+                // Show progress container
+                progressContainer.style.display = 'block';
+                document.getElementById('submit-btn').disabled = true;
+                
+                // Create folder name based on name and timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const folderName = `${name.replace(/\s+/g, '_')}_${timestamp}`;
+                
+                // Create metadata file
+                const metadata = {
+                    name: name,
+                    location: location,
+                    notes: notes,
+                    timestamp: new Date().toISOString(),
+                    files: selectedFiles.map(f => f.name)
+                };
+                
+                const metadataBlob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
+                
+                // Upload all files sequentially
+                const totalFiles = selectedFiles.length + 1; // +1 for metadata
+                let uploadedFiles = 0;
+                
+                // First, upload the metadata
+                await uploadFile(metadataBlob, `${folderName}/metadata.json`);
+                uploadedFiles++;
+                updateProgress(uploadedFiles, totalFiles);
+                
+                // Then upload each image
+                for (const file of selectedFiles) {
+                    await uploadFile(file, `${folderName}/${file.name}`);
+                    uploadedFiles++;
+                    updateProgress(uploadedFiles, totalFiles);
+                }
+                
+                showStatus('All files uploaded successfully!', 'success');
+                
+                // Reset the form
+                uploadForm.reset();
+                selectedFiles = [];
+                fileList.innerHTML = '';
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                showStatus(`Error uploading files: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('submit-btn').disabled = false;
+                progressContainer.style.display = 'none';
+            }
+        });
+        
+        async function uploadFile(file, path) {
+            // Create form data to send to Netlify function
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('path', path);
+            
+            // Call our Netlify function to handle the upload
+            const response = await fetch('/.netlify/functions/upload-to-webdav', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Upload failed');
+            }
+            
+            return response.json();
+        }
+        
+        function updateProgress(current, total) {
+            const percent = Math.round((current / total) * 100);
+            progressBar.value = percent;
+            progressText.textContent = `${percent}% (${current}/${total})`;
+        }
+        
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `status ${type}`;
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusMessage.textContent = '';
+                    statusMessage.className = 'status';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
