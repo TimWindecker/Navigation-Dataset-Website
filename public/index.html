@@ -266,7 +266,7 @@
         const uploadListItems = document.getElementById('upload-list-items');
         
         // Use Cloudflare Worker URL instead of Netlify function
-        const UPLOAD_ENDPOINT = '/worker';  // Update this to your actual worker route
+        const UPLOAD_ENDPOINT = 'https://navigation-dataset-website.twindecker.workers.dev/';  // Update this to your actual worker route
         
         // Track recent uploads in local storage
         let recentUploadsList = JSON.parse(localStorage.getItem('recentUploads') || '[]');
