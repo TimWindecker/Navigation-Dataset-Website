@@ -1,4 +1,4 @@
-name = "Navigation-Dataset-Website"
+name = "navigation-dataset-website"
 main = "worker.js"
 compatibility_date = "2023-08-01"
 
