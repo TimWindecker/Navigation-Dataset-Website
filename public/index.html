@@ -517,6 +517,9 @@
                 
                 console.log(`Upload response status: ${response.status}`);
                 
+                // Clone the response before reading it
+                const responseClone = response.clone();
+                
                 // Handle non-OK responses
                 if (!response.ok) {
                     let errorMessage;
@@ -526,8 +529,8 @@
                         errorMessage = errorData.message || `Upload failed with status ${response.status}`;
                         console.error('Upload error details:', errorData);
                     } catch (parseError) {
-                        // If not JSON, get text
-                        const errorText = await response.text();
+                        // If not JSON, get text from the cloned response
+                        const errorText = await responseClone.text();
                         errorMessage = errorText || `Upload failed with status ${response.status}`;
                         console.error('Upload error text:', errorText);
                     }
