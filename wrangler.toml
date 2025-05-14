@@ -11,9 +11,3 @@ SHARE_ID = ""
 # Configure settings for larger uploads
 [site]
 bucket = "./public"
-
-# Set limits for file uploads
-[limits]
-# Increase upload limits (100MB for paid workers, 25MB for free)
-upload_size = 104857600
-cpu_ms = 10
