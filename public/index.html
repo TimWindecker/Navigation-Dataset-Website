@@ -265,6 +265,9 @@
         const recentUploads = document.getElementById('recent-uploads');
         const uploadListItems = document.getElementById('upload-list-items');
         
+        // Use Cloudflare Worker URL instead of Netlify function
+        const UPLOAD_ENDPOINT = '/worker';  // Update this to your actual worker route
+        
         // Track recent uploads in local storage
         let recentUploadsList = JSON.parse(localStorage.getItem('recentUploads') || '[]');
         
@@ -497,9 +500,8 @@
             }
         });
         
-        
         async function uploadFile(file, path) {
-            // Create form data to send to Netlify function
+            // Create form data to send to Cloudflare Worker
             const formData = new FormData();
             formData.append('file', file);
             formData.append('path', path);
@@ -507,8 +509,8 @@
             console.log(`Uploading file to path: ${path}`);
             
             try {
-                // Call our Netlify function to handle the upload
-                const response = await fetch('/.netlify/functions/upload-to-webdav', {
+                // Call our Cloudflare Worker to handle the upload
+                const response = await fetch(UPLOAD_ENDPOINT, {
                     method: 'POST',
                     body: formData
                 });
