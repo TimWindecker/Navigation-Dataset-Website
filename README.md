@@ -2,8 +2,6 @@
 
 This is a minimalistic web application for collecting robot navigation dataset images along with metadata. Users can submit their name, location information, additional notes, and upload multiple images.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/2ca98639-e01e-42b0-a4fd-b8966b915982/deploy-status)](https://app.netlify.com/sites/navigation-dataset/deploys)
-
 ## Features
 
 - Simple, responsive design
@@ -18,77 +16,37 @@ This is a minimalistic web application for collecting robot navigation dataset i
 
 ### Prerequisites
 
-1. A Netlify account (free tier is sufficient)
+1. A Cloudflare account (free tier is sufficient)
 2. A Nextcloud instance with WebDAV access
 3. Git for version control
 
-### Step 1: Set up environment variables
+### Steps
 
-In your Netlify site settings, add the following environment variables:
+1. Set Up the Worker
+    1. Log in to your Cloudflare Dashboard
+    2. Navigate to Workers & Pages in the sidebar
+    3. Click Create Application → Create Worker
+    4. Use this repositroy as source
+2. Configure Environment Variables
+    1. While in your Worker's dashboard, go to the Settings tab
+    2. Scroll down to Environment Variables
+    3. Add the following variables:
+        - `WEBDAV_URL`: Your Nextcloud WebDAV URL (e.g., https://your-nextcloud.com/public.php/webdav)
+        - `SHARE_ID`: Your Nextcloud share ID (e.g. the last part of a shared link, make sure the link has can edit and upload files)
+3. Deploy the Website Files
+    1. Go to the Workers & Pages dashboard
+    2. Click Create Application → Pages
+    3. Use this repository as source
+    4. Set `public` as root directory
+5. Update the UPLOAD_ENDPOINT in index.html to point to the worker URL
 
-- `WEBDAV_URL`: Your Nextcloud WebDAV URL (e.g., `https://your-nextcloud.com/public.php/webdav/robot-navigation-data`)
-- `SHARE_ID`: Your Nextcloud share ID for public access
-
-### Step 2: Install required dependencies
-
-Create a `package.json` file with the following contents:
-
-```json
-{
-  "name": "robot-navigation-dataset-collector",
-  "version": "1.0.0",
-  "description": "A web form for collecting robot navigation datasets",
-  "main": "index.html",
-  "dependencies": {
-    "busboy": "^1.6.0",
-    "form-data": "^4.0.0",
-    "node-fetch": "^2.6.7"
-  }
-}
-```
-
-### Step 3: Configure Netlify build settings
-
-Create a `netlify.toml` file with the following contents:
-
-```toml
-[build]
-  publish = "./"
-  functions = "./functions"
-
-[functions]
-  directory = "functions"
-  node_bundler = "esbuild"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-```
-
-### Step 4: Create the functions directory
-
-```
-mkdir -p functions
-```
-
-Move the `upload-to-webdav.js` file to the `functions` directory.
-
-### Step 5: Deploy to Netlify
-
-You can deploy this website to Netlify through their web interface or using the Netlify CLI:
-
-```bash
-npm install -g netlify-cli
-netlify login
-netlify deploy
-```
+_Note:_ If you encounter issues, check the Logs tab in your Worker's dashboard to identify the specific error or your browsers debug console.
 
 ## Security Considerations
 
-- This setup uses a Netlify Function as a secure proxy for WebDAV uploads, keeping your credentials safe.
+- This setup uses a Cloudflare Worker as a secure proxy for WebDAV uploads, keeping your credentials safe.
 - For production use, consider adding rate limiting or user authentication.
-- The WebDAV share should be configured with appropriate permissions in Nextcloud.
+- The WebDAV share should be configured with edit and upload permissions in Nextcloud.
 
 ## Data Structure
 
