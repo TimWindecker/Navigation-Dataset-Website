@@ -93,40 +93,9 @@
                 height: 120px; /* Slightly taller than before */
             }
         }
-        /* Form steps styles - NEW */
-        .form-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
-        .form-step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            min-width: 100px;
-            margin-bottom: 15px;
-        }
-        .step-number {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #3498db;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        .step-text {
-            text-align: center;
-            font-size: 14px;
-            color: #555;
-        }
         .form-group {
             margin-bottom: 20px;
+            width: 100%; /* Make all form groups full width */
         }
         label {
             display: block;
@@ -139,6 +108,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
+            box-sizing: border-box; /* Ensure padding doesn't affect width */
         }
         /* Placeholder style modifications */
         ::placeholder {
@@ -189,6 +159,8 @@
             border: 1px dashed #ddd;
             border-radius: 4px;
             min-height: 50px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .file-item {
             display: flex;
@@ -247,6 +219,8 @@
             cursor: pointer;
             margin-bottom: 10px;
             transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
         }
         #drop-area.highlight {
             border-color: #3498db;
@@ -323,26 +297,6 @@
         <h3>Example Images</h3>
         <div class="image-gallery">
             <!-- Example images will be dynamically loaded here -->
-        </div>
-    </div>
-    
-    <!-- NEW: Form Steps Guide -->
-    <div class="form-steps">
-        <div class="form-step">
-            <div class="step-number">1</div>
-            <div class="step-text">Enter your information</div>
-        </div>
-        <div class="form-step">
-            <div class="step-number">2</div>
-            <div class="step-text">Add location details</div>
-        </div>
-        <div class="form-step">
-            <div class="step-number">3</div>
-            <div class="step-text">Upload images</div>
-        </div>
-        <div class="form-step">
-            <div class="step-number">4</div>
-            <div class="step-text">Submit dataset</div>
         </div>
     </div>
     
