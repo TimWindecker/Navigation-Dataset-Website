@@ -85,7 +85,7 @@
         }
         .gallery-item {
             flex: 0 0 auto;
-            width: 160px; /* Slightly smaller width */
+            width: 320px;
             border-radius: 6px;
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -93,23 +93,29 @@
         }
         .gallery-item img {
             width: 100%;
-            height: 120px; /* Slightly reduced height */
+            height: 240px;
             object-fit: cover;
             display: block;
         }
         .gallery-item .caption {
-            padding: 6px; /* Reduced padding */
-            font-size: 12px;
-            background-color: rgba(255,255,255,0.9);
-            text-align: center;
+            padding: 6px;
+            font-size: 13px;
+            background-color: rgba(255,255,255,0.95);
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        .gallery-item .caption strong {
+            font-weight: bold;
+            font-size: 1.1em;
         }
         /* Mobile responsiveness for gallery */
         @media (max-width: 640px) {
             .gallery-item {
-                width: 140px; /* Smaller on mobile */
+                width: 280px;
             }
             .gallery-item img {
-                height: 100px; /* Shorter on mobile */
+                height: 200px;
             }
             /* Two-column grid layout for form on mobile */
             #upload-form {
@@ -409,33 +415,70 @@
 
         // Sample example images - replace with actual paths when available
         const exampleImages = [
-            { src: '/images/GOPR0991_grass_vs_path.jpg', caption: 'Grass vs. Stone Path' },
-            { src: '/images/GOPR0996_construction_separate_lanes.jpg', caption: 'Separated Lanes' },
-            { src: '/images/GOPR1001_stairs_vs_ramp.jpg', caption: 'Stairs vs. Ramp' },
-            { src: '/images/GOPR1008_occluded_stairs.jpg', caption: 'Occluded Stairs' },
-            { src: '/images/GOPR1032_busy_tram_stop.jpg', caption: 'Busy Tram Stop' },
-            { src: '/images/GOPR1174_hiking_path_split.jpg', caption: 'Hiking Path Split' },
-            { src: '/images/GOPR1067_kayak_rental.jpg', caption: 'Kayak Rental' },
-            { src: '/images/GOPR1105_main_station_entry.jpg', caption: 'Main Station Entry' },
-            { src: '/images/GOPR1144_kebab_backyard.jpg', caption: 'Kebab Backyard' }
+            { 
+                src: '/images/GOPR0991_grass_vs_path.jpg',
+                tite: 'Grass vs. Stone Path',
+                caption: 'Understanding of the ground type and what is best for an embodiment'
+            },
+            { 
+                src: '/images/GOPR0996_construction_separate_lanes.jpg',
+                tite: 'Separated Lanes',
+                caption: 'Uncommon traffic rerouting'
+            },
+            { 
+                src: '/images/GOPR1001_stairs_vs_ramp.jpg',
+                tite: 'Stairs vs. Ramp',
+                caption: 'Understanding of the terrain structure and what is best for an embodiment'
+            },
+            { 
+                src: '/images/GOPR1008_occluded_stairs.jpg',
+                tite: 'Occluded Stairs',
+                caption: 'Path is partly hidden and difficult to recognize'
+            },
+            { 
+                src: '/images/GOPR1032_busy_tram_stop.jpg',
+                title: 'Busy Tram Stop',
+                caption: 'Managing of crowds and crosswalks'
+            },
+            { 
+                src: '/images/GOPR1174_hiking_path_split.jpg',
+                title: 'Hiking Path Split',
+                caption: 'Multiple paths with different ground types'
+            },
+            { 
+                src: '/images/GOPR1067_kayak_rental.jpg',
+                title: 'Kayak Rental',
+                caption: 'Uncommon obstacle and sign needs to be understood'
+            },
+            { 
+                src: '/images/GOPR1105_main_station_entry.jpg',
+                title: 'Main Station Entry',
+                caption: 'Following the flow of people through a crowded area'
+            },
+            { 
+                src: '/images/GOPR1144_kebab_backyard.jpg',
+                title: 'Kebab Backyard',
+                caption: 'Avoid random obstacles such as chairs or shopping carts'
+             }
         ];
 
         // Load example images into the gallery
         function loadExampleImages() {
             const imageGallery = document.querySelector('.image-gallery');
-            
+
             exampleImages.forEach(img => {
                 const galleryItem = document.createElement('div');
                 galleryItem.className = 'gallery-item';
-                
+
                 const image = document.createElement('img');
                 image.src = img.src;
-                image.alt = img.caption;
-                
+                image.alt = img.title;
+
                 const caption = document.createElement('div');
                 caption.className = 'caption';
-                caption.textContent = img.caption;
-                
+                // Use <strong> for the name, normal for desc:
+                caption.innerHTML = `<strong>${img.title}</strong>: ${img.description}`;
+
                 galleryItem.appendChild(image);
                 galleryItem.appendChild(caption);
                 imageGallery.appendChild(galleryItem);
