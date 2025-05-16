@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robot Navigation Dataset Collection</title>
+    <title>🧭 Navigation Data Collection</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
     <style>
         body {
@@ -29,6 +29,68 @@
         .project-info p, .project-info li, .project-info h2, .project-info h3 {
             color: #000; /* Ensure all text elements in the info box are dark */
         }
+        /* Example images gallery styles */
+        .example-images {
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2ecc71;
+            color: #000;
+        }
+        .example-images h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #000;
+        }
+        .image-gallery {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f0f0f0;
+        }
+        .image-gallery::-webkit-scrollbar {
+            height: 6px;
+        }
+        .image-gallery::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+        .image-gallery::-webkit-scrollbar-thumb {
+            background-color: #3498db;
+            border-radius: 10px;
+        }
+        .gallery-item {
+            flex: 0 0 auto;
+            width: 180px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            display: block;
+        }
+        .gallery-item .caption {
+            padding: 8px;
+            font-size: 12px;
+            background-color: rgba(255,255,255,0.9);
+            text-align: center;
+        }
+        /* Mobile responsiveness for gallery */
+        @media (max-width: 640px) {
+            .gallery-item {
+                width: 140px;
+            }
+            .gallery-item img {
+                height: 100px;
+            }
+        }
         .form-group {
             margin-bottom: 20px;
         }
@@ -43,6 +105,11 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
+        }
+        /* Placeholder style modifications */
+        ::placeholder {
+            color: #bbb;
+            opacity: 1;
         }
         textarea {
             min-height: 100px;
@@ -191,20 +258,28 @@
         <p>Loading project information...</p>
     </div>
     
+    <!-- New example images section -->
+    <div class="example-images">
+        <h3>Example Images</h3>
+        <div class="image-gallery">
+            <!-- Example images will be dynamically loaded here -->
+        </div>
+    </div>
+    
     <form id="upload-form">
         <div class="form-group">
             <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" required>
+            <input type="text" id="name" name="name" placeholder="First_Name Last_Name" required>
         </div>
         
         <div class="form-group">
             <label for="location">Image Location</label>
-            <input type="text" id="location" name="location" required>
+            <input type="text" id="location" name="location" placeholder="City, Country" required>
         </div>
         
         <div class="form-group">
             <label for="notes">Additional Notes</label>
-            <textarea id="notes" name="notes"></textarea>
+            <textarea id="notes" name="notes" placeholder="..."></textarea>
         </div>
         
         <div class="form-group">
@@ -249,6 +324,40 @@
                 document.getElementById('project-info').innerHTML = '<p>Error loading project information.</p>';
             }
         })();
+
+        // Sample example images - replace with actual paths when available
+        const exampleImages = [
+            { src: '/images/GOPR0991_grass_vs_path.jpg', caption: 'Grass vs. Stone Path' },
+            { src: '/images/GOPR0996_construction_separate_lanes.jpg', caption: 'Separated Lanes' },
+            { src: '/images/GOPR1001_stairs_vs_ramp.jpg', caption: 'Stairs vs. Ramp' },
+            { src: '/images/GOPR1008_occluded_stairs.jpg', caption: 'Occluded Stairs' },
+            { src: '/images/GOPR1032_busy_tram_stop.jpg', caption: 'Busy Tram Stop' }
+        ];
+
+        // Load example images into the gallery
+        function loadExampleImages() {
+            const imageGallery = document.querySelector('.image-gallery');
+            
+            exampleImages.forEach(img => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item';
+                
+                const image = document.createElement('img');
+                image.src = img.src;
+                image.alt = img.caption;
+                
+                const caption = document.createElement('div');
+                caption.className = 'caption';
+                caption.textContent = img.caption;
+                
+                galleryItem.appendChild(image);
+                galleryItem.appendChild(caption);
+                imageGallery.appendChild(galleryItem);
+            });
+        }
+
+        // Call function to load example images
+        document.addEventListener('DOMContentLoaded', loadExampleImages);
 
         // Store selected files
         let selectedFiles = [];
