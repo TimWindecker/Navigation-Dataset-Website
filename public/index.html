@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧭 Navigation Data Collection</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -82,14 +84,46 @@
             background-color: rgba(255,255,255,0.9);
             text-align: center;
         }
-        /* Mobile responsiveness for gallery */
+        /* Mobile responsiveness for gallery - ENHANCED */
         @media (max-width: 640px) {
             .gallery-item {
-                width: 140px;
+                width: 160px; /* Slightly larger than before */
             }
             .gallery-item img {
-                height: 100px;
+                height: 120px; /* Slightly taller than before */
             }
+        }
+        /* Form steps styles - NEW */
+        .form-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .form-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 100px;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .step-text {
+            text-align: center;
+            font-size: 14px;
+            color: #555;
         }
         .form-group {
             margin-bottom: 20px;
@@ -114,22 +148,40 @@
         textarea {
             min-height: 100px;
         }
-        button {
+        /* Enhanced submit button - UPDATED */
+        button[type="submit"] {
             background-color: #3498db;
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 14px 24px; /* Slightly larger */
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        button:hover {
+        button[type="submit"]:hover {
             background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
-        button:disabled {
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+        button[type="submit"] i {
+            margin-right: 8px;
+        }
+        button[type="submit"]:disabled {
             background-color: #95a5a6;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         #file-list {
             margin-top: 10px;
@@ -158,10 +210,17 @@
             border-radius: 3px;
             cursor: pointer;
         }
+        /* Enhanced status message - UPDATED */
         .status {
-            padding: 10px;
+            padding: 15px;
             margin-top: 20px;
-            border-radius: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+        .status i {
+            margin-right: 10px;
+            font-size: 18px;
         }
         .success {
             background-color: #d4edda;
@@ -208,9 +267,10 @@
             white-space: nowrap;
             border: 0;
         }
+        /* Slightly larger file preview - UPDATED */
         .file-preview {
-            width: 40px;
-            height: 40px;
+            width: 50px; /* Was 40px */
+            height: 50px; /* Was 40px */
             object-fit: cover;
             margin-right: 10px;
             border-radius: 3px;
@@ -258,11 +318,31 @@
         <p>Loading project information...</p>
     </div>
     
-    <!-- New example images section -->
+    <!-- Example images section -->
     <div class="example-images">
         <h3>Example Images</h3>
         <div class="image-gallery">
             <!-- Example images will be dynamically loaded here -->
+        </div>
+    </div>
+    
+    <!-- NEW: Form Steps Guide -->
+    <div class="form-steps">
+        <div class="form-step">
+            <div class="step-number">1</div>
+            <div class="step-text">Enter your information</div>
+        </div>
+        <div class="form-step">
+            <div class="step-number">2</div>
+            <div class="step-text">Add location details</div>
+        </div>
+        <div class="form-step">
+            <div class="step-number">3</div>
+            <div class="step-text">Upload images</div>
+        </div>
+        <div class="form-step">
+            <div class="step-number">4</div>
+            <div class="step-text">Submit dataset</div>
         </div>
     </div>
     
@@ -292,7 +372,8 @@
             <div class="upload-count" id="upload-count">0 files selected</div>
         </div>
         
-        <button type="submit" id="submit-btn">Upload Dataset</button>
+        <!-- Enhanced submit button with icon -->
+        <button type="submit" id="submit-btn"><i class="fas fa-cloud-upload-alt"></i>Upload Dataset</button>
     </form>
     
     <div id="progress-container">
@@ -595,6 +676,7 @@
                 localStorage.setItem('recentUploads', JSON.stringify(recentUploadsList));
                 displayRecentUploads();
                 
+                // Updated success message with icon
                 showStatus('All files uploaded successfully!', 'success');
                 
                 // Reset the form
@@ -608,7 +690,7 @@
                 showStatus(`Error uploading files: ${error.message}`, 'error');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Upload Dataset';
+                submitBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>Upload Dataset';
                 progressContainer.style.display = 'none';
             }
         });
@@ -666,13 +748,22 @@
             progressText.textContent = `${percent}% (${current}/${total})`;
         }
         
+        // Enhanced status message function with icons
         function showStatus(message, type) {
-            statusMessage.textContent = message;
+            let icon = '';
+            if (type === 'success') {
+                icon = '<i class="fas fa-check-circle"></i>';
+            } else if (type === 'error') {
+                icon = '<i class="fas fa-exclamation-circle"></i>';
+            }
+            
+            statusMessage.innerHTML = `${icon}${message}`;
             statusMessage.className = `status ${type}`;
+            
             // Auto-hide success messages after 5 seconds
             if (type === 'success') {
                 setTimeout(() => {
-                    statusMessage.textContent = '';
+                    statusMessage.innerHTML = '';
                     statusMessage.className = 'status';
                 }, 5000);
             }
