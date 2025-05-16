@@ -21,12 +21,21 @@
             color: #2c3e50;
             margin-bottom: 15px; /* Reduced margin */
             display: flex;
-            flex-wrap: wrap;
             align-items: center;
             gap: 8px;
         }
         h1 .emoji {
-            flex-shrink: 0;
+            flex-shrink: 0;        /* Do not shrink the emoji */
+            font-size: 1.5em;      /* Makes the emoji look good (optional) */
+            line-height: 1;        /* Aligns emoji nicely (optional) */
+        }
+
+        h1 .title-text {
+            white-space: normal;   /* Allow title text to wrap */
+            word-break: break-word;
+            flex: 1 1 0;
+            min-width: 0;          /* Allow shrinking in flex context */
+            display: inline;       /* Inline so it wraps as text */
         }
         .project-info {
             padding: 15px; /* Reduced padding */
