@@ -13,7 +13,7 @@ We are collecting photos of real-world locations to help advance robotics resear
 
 3. **Upload Your Photo:**  
    - Enter your **first and last name**. Don't worry, we will anonymize your name as well.
-   - Add the image location in the format: `city, country`.
+   - Add the image location in the format: **city, country**.
    - Upload your image using the form below.
 
 ---
